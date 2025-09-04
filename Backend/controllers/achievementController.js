@@ -22,6 +22,7 @@ export const createAchievement = async (req, res) => {
 export const getAllAchievements = async (req, res) => {
   try {
     const achievements = await Achievement.find().populate("user", "firstName lastName email");
+    console.log(achievements)
     res.status(200).json({ success: true, data: achievements });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

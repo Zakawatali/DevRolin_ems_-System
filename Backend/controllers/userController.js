@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import EmployeeProfile from '../models/EmployeeProfile.js';
+import { sendEmail } from "../utils/mailService.js";
+import { emailTemplates } from "../utils/emailTemplates.js";
 
 // User Signup
 export const registerUser = async (req, res) => {
@@ -66,27 +68,44 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // check if user exists
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // ✅ Only check in EmployeeProfile because User is deleted after approval
+    const employee = await EmployeeProfile.findOne({ email });
+    if (!employee) {
+      return res.status(404).json({ message: "User not found or not approved yet" });
+    }
 
-    // check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
-//     // Jwt Token Generator
-//     const token = jwt.sign(
-//   { id: user._id, email: user.email }, 
-//   process.env.JWT_SECRET, 
-//   { expiresIn: "1d" } 
-// );    
-           
-    // build token payload
-    const payload = { id: user._id, role: user.role, email: user.email };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '15m' });
+    // Check password
+    const isMatch = await bcrypt.compare(password, employee.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
+    // Build JWT payload
+    const payload = {
+      id: employee._id,
+      role: employee.role,
+      email: employee.email,
+    };
 
-    res.status(200).json({ message: "Login successful", token, user });
+    // Sign JWT
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN || "15m",
+    });
+
+    // Send response without password
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      employee: {
+        id: employee._id,
+        email: employee.email,
+        role: employee.role,
+        firstName: employee.firstName,
+        lastName: employee.lastName,
+      },
+    });
   } catch (error) {
+    console.error("❌ Login error:", error);
     res.status(500).json({ message: "Error logging in", error: error.message });
   }
 };
@@ -146,16 +165,30 @@ export const approveUser = async (req, res) => {
 
     // Delete user from pending User collection
     await user.deleteOne();
+    console.log(employeeProfile.email);
+   // Send welcome email to approved employee
+    let emailStatus = "Email sent successfully";
+    try {
+      await sendEmail({
+        to: employeeProfile.email,
+        subject: "🎉 Welcome to the Company!",
+        html: emailTemplates.welcomeEmployee(employeeProfile),
+      });
+    } catch (emailErr) {
+      console.error("Error sending email:", emailErr.message);
+      emailStatus = "Employee approved, but email could not be sent.";
+    }
 
     res.status(200).json({
       message: "User approved and added as Employee",
-      employeeProfile
+      employeeProfile,
     });
 
   } catch (err) {
     res.status(500).json({ message: "Error approving user", error: err.message });
   }
 };
+
 
 // Rejected User
 // rejectUser Controller

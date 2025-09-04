@@ -6,14 +6,16 @@ import {
   updateAchievement,
   deleteAchievement,
 } from "../controllers/achievementController.js";
+import { protect,authorizeRoles } from "../middlewares/authmiddlewares.js";
 
 const router = express.Router();
 
+
 // Achievement Routes
-router.post("/", createAchievement); // Create Achievement
-router.get("/", getAllAchievements); // Get All Achievements
-router.get("/:id", getAchievementById); // Get Achievement by ID
-router.put("/:id", updateAchievement);   // Update Achievement
-router.delete("/:id", deleteAchievement);  // Delete Achievement
+router.post("/",protect,authorizeRoles("Admin","HR"), createAchievement); // Create Achievement
+router.get("/",protect, getAllAchievements); // Get All Achievements
+router.get("/:id",protect, getAchievementById); // Get Achievement by ID
+router.put("/:id",protect,authorizeRoles("Admin","HR"), updateAchievement);   // Update Achievement
+router.delete("/:id",protect,authorizeRoles("Admin","HR"), deleteAchievement);  // Delete Achievement
 
 export default router;

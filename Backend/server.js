@@ -9,11 +9,18 @@ import attendanceRoutes from './routes/attendanceRoutes.js';
 import leaveRoutes from "./routes/leaveRoutes.js";
 import achievementRoutes from "./routes/achievementRoutes.js";
 import documentRoutes   from  "./routes/documentRoutes.js";
+import cors from "cors";
 
 
+
+// ✅ allow requests from your frontend
 
 
 const app = express();
+app.use(cors({
+  origin: "*", // frontend URL
+  
+}));
 connectDB();
 
 //  Middleware to parse JSON 
@@ -31,6 +38,7 @@ app.use("/api/documents", documentRoutes);    // documents routes
 
 
 const PORT = process.env.PORT || 3000;
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
