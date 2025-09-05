@@ -1,5 +1,7 @@
 import Leave from "../models/Leave.js";
-
+import EmployeeProfile from '../models/EmployeeProfile.js';
+import { sendEmail } from "../utils/mailService.js";
+import { emailTemplates } from "../utils/emailTemplates.js";
 
 // Apply for leave
 export const applyLeave = async (req, res) => {
@@ -30,7 +32,7 @@ export const applyLeave = async (req, res) => {
 export const getAllLeaves = async (req, res) => {
   try {
     const leaves = await Leave.find()
-      .populate("employee", "firstName lastName email")
+      .populate("employeemailStatuse", "firstName lastName email")
       .populate("approver", "firstName lastName email");
 
     res.status(200).json({ success: true, data: leaves });
@@ -57,20 +59,41 @@ export const getLeaveById = async (req, res) => {
 // Approve leave
 export const approveLeave = async (req, res) => {
   try {
-    const { id } = req.params; // leave ka id URL me pass hoga
+    const { id } = req.params;
     const leave = await Leave.findById(id);
 
     if (!leave) {
       return res.status(404).json({ success: false, message: "Leave not found" });
     }
 
-    leave.status = "APPROVED"; // sirf status update
+    // Update status
+    leave.status = "APPROVED";
     await leave.save();
+
+    let emailStatus = "Email sent successfully";
+
+    try {
+      // ✅ Fetch employee details
+      const employeeProfile = await EmployeeProfile.findById(leave.employee);
+      if (!employeeProfile) {
+        emailStatus = "Employee not found, email not sent.";
+      } else {
+        await sendEmail({
+          to: employeeProfile.email,
+          subject: "✅ Leave Approved",
+          html: emailTemplates.leaveApproved(employeeProfile, leave),
+        });
+      }
+    } catch (emailErr) {
+      console.error("Error sending email:", emailErr.message);
+      emailStatus = "Leave approved, but email could not be sent.";
+    }
 
     res.status(200).json({
       success: true,
       message: "Leave approved successfully",
       data: leave,
+      emailStatus,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -87,6 +110,25 @@ export const rejectLeave = async (req, res) => {
     leave.status = "REJECTED";
     // leave.approver = req.body.approver; // approver id
     await leave.save();
+    let emailStatus = "Email sent successfully";
+
+    try {
+      // ✅ Fetch employee details
+      const employeeProfile = await EmployeeProfile.findById(leave.employee);
+      if (!employeeProfile) {
+        emailStatus = "Employee not found, email not sent.";
+      } else {
+        await sendEmail({
+          to: employeeProfile.email,
+          subject: "✅ Leave Approved",
+          html: emailTemplates.leaveRejected(employeeProfile, leave),
+        });
+      }
+    } catch (emailErr) {
+      console.error("Error sending email:", emailErr.message);
+      emailStatus = "Leave approved, but email could not be sent.";
+    }
+
 
     res.status(200).json({ success: true, message: "Leave rejected", data: leave });
   } catch (error) {

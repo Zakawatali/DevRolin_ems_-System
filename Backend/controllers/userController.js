@@ -21,11 +21,12 @@ export const registerUser = async (req, res) => {
       position,
       experience,
       education,
+      image,
       role,
       status,
     } = req.body;
     if (!firstName || !lastName || !email || !password || !department || !phone
-      || !role || !address || !dateOfBirth || !department || !position || !experience || !education
+      || !role || !address || !dateOfBirth || !department || !position || !image || !experience || !education
     ) {
       return res.status(400).json({ message: "Please fill all required fields" });  
     }
@@ -157,6 +158,7 @@ export const approveUser = async (req, res) => {
       experience: user.experience,
       education: user.education,
       role: user.role,
+      Image: user.image,
       employeeCode: generateEmployeeCode(),
       status: "ACTIVE" // approved employee
     });
@@ -165,7 +167,7 @@ export const approveUser = async (req, res) => {
 
     // Delete user from pending User collection
     await user.deleteOne();
-    console.log(employeeProfile.email);
+    
    // Send welcome email to approved employee
     let emailStatus = "Email sent successfully";
     try {

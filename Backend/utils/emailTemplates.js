@@ -15,13 +15,15 @@ export const emailTemplates = {
 
   leaveApproved: (employee, leave) => `
     <h2>Leave Approved ✅</h2>
-    <p>Hello ${employee.firstName},</p>
-    <p>Your leave from <b>${leave.startDate}</b> to <b>${leave.endDate}</b> has been approved.</p>
+    <p>Hello ${employee.firstName} ${employee.lastName}</p>
+    <p>Your leave from <b>${new Date(leave.startDate).toDateString()}</b> to <b>${new Date(leave.endDate).toDateString()}</b> has been approved.</p>
+
   `,
 
   leaveRejected: (employee, leave) => `
     <h2>Leave Rejected ❌</h2>
-    <p>Hello ${employee.firstName},</p>
-    <p>Your leave request from <b>${leave.startDate}</b> to <b>${leave.endDate}</b> has been rejected.</p>
+    <p>Hello ${employee.firstName} ${employee.lastName}</p>
+    <p>Your leave request from <b>${new Date(leave.startDate).toDateString()}</b> to <b>${new Date(leave.endDate).toDateString()}</b> has been rejected.</p>
+
   `,
 };

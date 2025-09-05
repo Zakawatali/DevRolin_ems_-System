@@ -52,11 +52,16 @@ const userSchema = new mongoose.Schema({
     default: "Employee", // ✅ default is Employee
     required: true,
   },
+   image: {
+    type: String, // Store URL or file path
+    default: "https://via.placeholder.com/150", // default profile picture
+  },
   status:    { 
     type: String,
      enum: ['PENDING','ACTIVE','SUSPENDED','TERMINATED'], 
      default: 'PENDING' }
-}, 
+},
+ 
 { timestamps: true });
 
 const User = mongoose.model("User", userSchema);

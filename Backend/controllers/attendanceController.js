@@ -108,3 +108,57 @@ exports.deleteAttendance = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+// Get all attendance records
+exports.getAllattendance = async (req, res) => {
+  try {
+    const attendance = await Attendance.find().populate("employeeId", "firstName lastName email");
+    res.status(200).json({
+      success: true,
+      count: attendance.length,
+      data: attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching attendance",
+      error: error.message,
+    });
+  }
+};
+
+// Get attendance by employeeId
+exports.getAttendanceById = async (req, res) => {
+  try {
+    const { Id } = req.params; // coming from request body
+
+    if (!Id) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee ID is required",
+      });
+    }
+
+    const attendance = await Attendance.find({ employeeId: Id }).populate("employeeId", "firstName lastName email");
+
+    if (!attendance || attendance.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No attendance record found for this employee",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: attendance.length,
+      data: attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching attendance by ID",
+      error: error.message,
+    });
+  }
+};
